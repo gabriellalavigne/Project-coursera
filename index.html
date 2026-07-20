@@ -1,25 +1,578 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta http-equiv="refresh" content="0; url=tugas-5/">
-  <title>David Chu's China Bistro</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      padding: 50px;
-      background: #f5f5f5;
-    }
-    a {
-      color: #f00;
-      font-size: 20px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧠 Tensor Shape Identification</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0c0c1d 0%, #1a1a3e 50%, #0c0c1d 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: white;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 40px;
+            font-size: 1.1em;
+        }
+
+        .section {
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .section h2 {
+            color: #00d2ff;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .tensor-input-area {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tensor-input-area textarea {
+            flex: 1;
+            min-width: 300px;
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.05);
+            color: white;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+            resize: vertical;
+            min-height: 150px;
+        }
+
+        .tensor-input-area textarea:focus {
+            outline: none;
+            border-color: #00d2ff;
+        }
+
+        .tensor-input-area .input-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-width: 200px;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(0, 210, 255, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(17, 153, 142, 0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(245, 87, 108, 0.3);
+        }
+
+        .result-box {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            border-left: 4px solid #00d2ff;
+        }
+
+        .result-box .tensor-display {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            color: #00d2ff;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+
+        .shape-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .shape-item {
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .shape-item .label {
+            color: #888;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .shape-item .value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00d2ff;
+            margin-top: 5px;
+        }
+
+        .shape-item .value.dimensions {
+            color: #f093fb;
+        }
+
+        .shape-item .value.elements {
+            color: #38ef7d;
+        }
+
+        .examples {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .example-btn {
+            padding: 8px 15px;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            background: rgba(255,255,255,0.05);
+            color: #aaa;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+
+        .example-btn:hover {
+            border-color: #00d2ff;
+            color: white;
+            background: rgba(0, 210, 255, 0.1);
+        }
+
+        .tensor-viz {
+            display: grid;
+            gap: 2px;
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+        }
+
+        .tensor-cell {
+            background: rgba(0, 210, 255, 0.15);
+            padding: 8px;
+            text-align: center;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #00d2ff;
+            transition: all 0.3s;
+        }
+
+        .tensor-cell:hover {
+            background: rgba(0, 210, 255, 0.3);
+            transform: scale(1.05);
+        }
+
+        .history-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 14px;
+        }
+
+        .history-item .shape {
+            color: #00d2ff;
+            font-weight: bold;
+        }
+
+        .history-item .time {
+            color: #666;
+            font-size: 12px;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #00d2ff;
+            border-radius: 10px;
+        }
+    </style>
 </head>
 <body>
-  <h1>David Chu's China Bistro</h1>
-  <p>Redirecting to <a href="tugas-5/">Module 5</a>...</p>
-  <p>Jika tidak redirect otomatis, <a href="tugas-5/">klik di sini</a>.</p>
+    <div class="container">
+        <h1>🧠 Tensor Shape Identification</h1>
+        <p class="subtitle">Identifikasi dan visualisasi shape tensor dengan mudah</p>
+
+        <div class="section">
+            <h2>📥 Input Tensor</h2>
+            <div class="tensor-input-area">
+                <textarea id="tensorInput" placeholder="Masukkan tensor dalam format array...&#10;Contoh: [[1, 2, 3], [4, 5, 6]]">[[1, 2, 3], [4, 5, 6]]</textarea>
+                <div class="input-controls">
+                    <button class="btn btn-primary" onclick="analyzeTensor()">🔍 Analisis Tensor</button>
+                    <button class="btn btn-success" onclick="visualizeTensor()">📊 Visualisasi</button>
+                    <button class="btn btn-danger" onclick="clearAll()">🗑️ Clear</button>
+                </div>
+            </div>
+            <div class="examples">
+                <span style="color:#888;font-size:13px;">Contoh:</span>
+                <button class="example-btn" onclick="loadExample('1d')">[1, 2, 3, 4]</button>
+                <button class="example-btn" onclick="loadExample('2d')">[[1,2],[3,4]]</button>
+                <button class="example-btn" onclick="loadExample('3d')">[[[1,2],[3,4]],[[5,6],[7,8]]]</button>
+                <button class="example-btn" onclick="loadExample('4d')">Array 4D</button>
+                <button class="example-btn" onclick="loadExample('scalar')">42</button>
+            </div>
+        </div>
+
+        <div id="resultsSection" class="section" style="display:none;">
+            <h2>📊 Hasil Analisis</h2>
+            <div id="resultContent"></div>
+        </div>
+
+        <div id="vizSection" class="section" style="display:none;">
+            <h2>🎨 Visualisasi Tensor</h2>
+            <div id="vizContent"></div>
+        </div>
+
+        <div class="section">
+            <h2>📜 History</h2>
+            <div id="historyList" class="history-list">
+                <p style="color:#666;text-align:center;">Belum ada analisis</p>
+            </div>
+            <button class="btn btn-danger" onclick="clearHistory()" style="margin-top:15px;width:100%;">🗑️ Clear History</button>
+        </div>
+    </div>
+
+    <script>
+        let history = [];
+
+        function getShape(arr) {
+            if (!Array.isArray(arr)) {
+                return [];
+            }
+            const shapes = [];
+            let current = arr;
+            while (Array.isArray(current)) {
+                shapes.push(current.length);
+                if (current.length > 0 && Array.isArray(current[0])) {
+                    current = current[0];
+                } else {
+                    break;
+                }
+            }
+            return shapes;
+        }
+
+        function getTotalElements(shape) {
+            return shape.reduce((a, b) => a * b, 1);
+        }
+
+        function getDimensions(arr) {
+            if (!Array.isArray(arr)) return 0;
+            let dims = 0;
+            let current = arr;
+            while (Array.isArray(current)) {
+                dims++;
+                if (current.length > 0 && Array.isArray(current[0])) {
+                    current = current[0];
+                } else {
+                    break;
+                }
+            }
+            return dims;
+        }
+
+        function isValidTensor(arr) {
+            if (!Array.isArray(arr)) return true;
+            if (arr.length === 0) return true;
+            
+            const firstLength = arr[0].length;
+            for (let i = 1; i < arr.length; i++) {
+                if (!Array.isArray(arr[i])) return false;
+                if (arr[i].length !== firstLength) return false;
+            }
+            return true;
+        }
+
+        function parseTensor(input) {
+            try {
+                return JSON.parse(input);
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function analyzeTensor() {
+            const input = document.getElementById('tensorInput').value.trim();
+            if (!input) {
+                alert('⚠️ Masukkan tensor terlebih dahulu!');
+                return;
+            }
+
+            const tensor = parseTensor(input);
+            if (tensor === null) {
+                alert('❌ Format tensor tidak valid! Gunakan format JSON array.');
+                return;
+            }
+
+            if (Array.isArray(tensor) && tensor.length > 0) {
+                if (!isValidTensor(tensor)) {
+                    alert('❌ Tensor tidak valid! Dimensi tidak konsisten.');
+                    return;
+                }
+            }
+
+            const shape = getShape(tensor);
+            const dims = getDimensions(tensor);
+            const totalElements = getTotalElements(shape);
+            const isScalar = !Array.isArray(tensor);
+            const isVector = Array.isArray(tensor) && !tensor.some(Array.isArray);
+            const isMatrix = Array.isArray(tensor) && tensor.length > 0 && Array.isArray(tensor[0]) && !tensor[0].some(Array.isArray);
+            const isTensor3D = Array.isArray(tensor) && tensor.length > 0 && Array.isArray(tensor[0]) && tensor[0].length > 0 && Array.isArray(tensor[0][0]);
+
+            let type = 'Unknown';
+            if (isScalar) type = 'Scalar (0D)';
+            else if (isVector) type = 'Vector (1D)';
+            else if (isMatrix) type = 'Matrix (2D)';
+            else if (isTensor3D) type = '3D Tensor';
+            else if (dims > 3) type = `${dims}D Tensor`;
+
+            const resultSection = document.getElementById('resultsSection');
+            const resultContent = document.getElementById('resultContent');
+            resultSection.style.display = 'block';
+
+            resultContent.innerHTML = `
+                <div class="result-box">
+                    <div class="tensor-display">${JSON.stringify(tensor, null, 2)}</div>
+                    <div class="shape-info">
+                        <div class="shape-item">
+                            <div class="label">📐 Shape</div>
+                            <div class="value">(${shape.join(', ')})</div>
+                        </div>
+                        <div class="shape-item">
+                            <div class="label">📏 Dimensi</div>
+                            <div class="value dimensions">${dims}D</div>
+                        </div>
+                        <div class="shape-item">
+                            <div class="label">🔢 Total Elemen</div>
+                            <div class="value elements">${totalElements}</div>
+                        </div>
+                        <div class="shape-item">
+                            <div class="label">🏷️ Tipe</div>
+                            <div class="value" style="font-size:16px;color:#f093fb;">${type}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            addHistory(shape, dims, totalElements, type);
+            visualizeTensor();
+        }
+
+        function visualizeTensor() {
+            const input = document.getElementById('tensorInput').value.trim();
+            if (!input) return;
+
+            const tensor = parseTensor(input);
+            if (tensor === null) return;
+
+            const vizSection = document.getElementById('vizSection');
+            const vizContent = document.getElementById('vizContent');
+            vizSection.style.display = 'block';
+
+            const shape = getShape(tensor);
+            const dims = getDimensions(tensor);
+
+            if (dims === 0) {
+                vizContent.innerHTML = `
+                    <div class="result-box">
+                        <p style="color:#aaa;">🧊 Scalar value: <strong style="color:#00d2ff;">${tensor}</strong></p>
+                    </div>
+                `;
+                return;
+            }
+
+            if (dims === 1) {
+                const maxVal = Math.max(...tensor);
+                vizContent.innerHTML = `
+                    <div class="result-box">
+                        <div class="tensor-viz" style="grid-template-columns: repeat(${Math.min(tensor.length, 10)}, 1fr);">
+                            ${tensor.map((val, i) => `
+                                <div class="tensor-cell" style="background: rgba(0, 210, 255, ${0.1 + (val / maxVal * 0.6)});">
+                                    ${typeof val === 'number' ? val.toFixed(1) : val}
+                                </div>
+                            `).join('')}
+                        </div>
+                        <p style="color:#888;margin-top:10px;font-size:13px;">Vector 1D dengan ${tensor.length} elemen</p>
+                    </div>
+                `;
+                return;
+            }
+
+            if (dims === 2) {
+                const maxCols = Math.min(tensor[0].length, 6);
+                const allValues = tensor.flat();
+                const maxVal = Math.max(...allValues);
+                vizContent.innerHTML = `
+                    <div class="result-box">
+                        <div class="tensor-viz" style="grid-template-columns: repeat(${maxCols}, 1fr);">
+                            ${allValues.slice(0, 30).map((val, i) => `
+                                <div class="tensor-cell" style="background: rgba(0, 210, 255, ${0.1 + (val / maxVal * 0.6)});">
+                                    ${typeof val === 'number' ? val.toFixed(1) : val}
+                                </div>
+                            `).join('')}
+                        </div>
+                        <p style="color:#888;margin-top:10px;font-size:13px;">Matrix 2D dengan shape (${tensor.length}, ${tensor[0].length})</p>
+                    </div>
+                `;
+                return;
+            }
+
+            vizContent.innerHTML = `
+                <div class="result-box">
+                    <div style="display:grid;gap:10px;">
+                        ${tensor.slice(0, 3).map((layer, li) => {
+                            const allValues = layer.flat();
+                            const maxVal = Math.max(...allValues);
+                            return `
+                                <div style="background:rgba(0,0,0,0.2);padding:10px;border-radius:8px;">
+                                    <p style="color:#888;font-size:12px;">Layer ${li + 1}</p>
+                                    <div class="tensor-viz" style="grid-template-columns: repeat(${Math.min(layer[0].length, 5)}, 1fr);">
+                                        ${allValues.slice(0, 16).map((val, i) => `
+                                            <div class="tensor-cell" style="background: rgba(0, 210, 255, ${0.1 + (val / maxVal * 0.6)});">
+                                                ${typeof val === 'number' ? val.toFixed(1) : val}
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                    <p style="color:#888;margin-top:10px;font-size:13px;">Tensor ${dims}D dengan shape (${shape.join(', ')})</p>
+                </div>
+            `;
+        }
+
+        function addHistory(shape, dims, totalElements, type) {
+            const time = new Date().toLocaleTimeString();
+            history.push({ shape, dims, totalElements, type, time });
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const historyList = document.getElementById('historyList');
+            if (history.length === 0) {
+                historyList.innerHTML = '<p style="color:#666;text-align:center;">Belum ada analisis</p>';
+                return;
+            }
+            historyList.innerHTML = history.map((item, index) => `
+                <div class="history-item">
+                    <span class="shape">(${item.shape.join(', ')}) - ${item.type}</span>
+                    <span>🔢 ${item.totalElements} elemen</span>
+                    <span class="time">${item.time}</span>
+                </div>
+            `).reverse().join('');
+        }
+
+        function clearAll() {
+            document.getElementById('tensorInput').value = '';
+            document.getElementById('resultsSection').style.display = 'none';
+            document.getElementById('vizSection').style.display = 'none';
+            document.getElementById('resultContent').innerHTML = '';
+            document.getElementById('vizContent').innerHTML = '';
+        }
+
+        function clearHistory() {
+            history = [];
+            renderHistory();
+        }
+
+        function loadExample(type) {
+            const examples = {
+                '1d': '[1, 2, 3, 4, 5]',
+                '2d': '[[1, 2, 3], [4, 5, 6], [7, 8, 9]]',
+                '3d': '[[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]]',
+                '4d': '[[[[1,2],[3,4]],[[5,6],[7,8]]],[[[9,10],[11,12]],[[13,14],[15,16]]]]',
+                'scalar': '42'
+            };
+            document.getElementById('tensorInput').value = examples[type] || '';
+            analyzeTensor();
+        }
+
+        window.onload = function() {
+            analyzeTensor();
+        };
+
+        document.getElementById('tensorInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                analyzeTensor();
+            }
+        });
+    </script>
 </body>
 </html>
